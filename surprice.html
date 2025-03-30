@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surprise Game!</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #ffffff;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+            background-image: url("79578.png");
+            background-color: rgba(244, 244, 244, 0.2);
+            transition: background 0.5s;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-blend-mode: overlay;
+            transition: background 0.5s, opacity 0.5s;
+        }
+
+        .glow-on-hover {
+            width: 220px;
+            height: 50px;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 25px;
+            font-weight: 600;
+            background: #ffffff;
+            cursor: pointer;
+            position: relative;
+            z-index: 0;
+            border-radius: 10px;
+        }
+
+        .glow-on-hover:before {
+            content: '';
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            background-size: 400%;
+            z-index: -1;
+            filter: blur(5px);
+            width: calc(100% + 4px);
+            height: calc(100% + 4px);
+            animation: glowing 20s linear infinite;
+            opacity: 0;
+            transition: opacity .3s ease-in-out;
+            border-radius: 10px;
+        }
+
+        .glow-on-hover:active {
+            color: #000
+        }
+
+        .glow-on-hover:active:after {
+            background: transparent;
+        }
+
+        .glow-on-hover:hover:before {
+            opacity: 1;
+        }
+
+        .glow-on-hover:after {
+            z-index: -1;
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #111;
+            left: 0;
+            top: 0;
+            border-radius: 10px;
+        }
+
+
+
+        .btn-custom {
+            font-size: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: #007BFF;
+            color: white;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        .btn-custom:hover {
+            background: #0056b3;
+        }
+
+        #surprise,
+        #score,
+        #timer {
+            margin-top: 20px;
+            text-shadow: 3px 3px 5px rgba(255, 0, 0, 0.7), -3px -3px 5px rgba(255, 255, 0, 0.7);
+            font-size: 24px;
+            color: #ffffff;
+            font-weight: bold;
+            animation: fadeIn 0.5s;
+        }
+
+        .target {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.5s;
+            animation: bounce 0.5s infinite alternate;
+        }
+
+        .golden {
+            background-color: gold !important;
+        }
+
+        .timer-box {
+            border: 2px solid #ccc;
+            background-color: #1b1b32;
+            border-radius: 10px;
+            padding: 10px;
+            color: #ffffff !important;
+        }
+
+        .final-score {
+            animation: blinker 1s step-start infinite;
+        }
+
+        .circlestyle {
+            transition: all 0.5s;
+            animation: bounce 0.5s infinite alternate;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .score-animate {
+            animation: scoreAnimation 0.5s ease-in-out;
+        }
+
+        .game-over-text {
+            text-shadow: 3px 3px 5px rgba(255, 0, 0, 0.7), -3px -3px 5px rgba(255, 255, 0, 0.7);
+            font-size: 30px;
+            color: #ffffff;
+        }
+
+        @keyframes glowing {
+            0% {
+                background-position: 0 0;
+            }
+
+            50% {
+                background-position: 400% 0;
+            }
+
+            100% {
+                background-position: 0 0;
+            }
+        }
+
+        @keyframes bounce {
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scoreAnimation {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.5);
+                color: green;
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+
+
+        @keyframes blinker {
+            50% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <button id="surpriseBtn" class="mt-3 btn btn-primary btn-lg glow-on-hover">Start Game!</button>
+    <div id="score" class="mt-3 timer-box">Score: 0</div>
+    <div id="timer" class="mt-3 timer-box">Time: 30</div>
+    <div id="surprise" class="mt-3"></div>
+    <audio id="gameEndAudio" src="mixkit-game-level-completed-2059.wav"></audio>
+
+    <script>
+        let score = 0;
+        let timeLeft = 30;
+        let gameInterval;
+        let gameActive = false;
+
+        function updateScore(points) {
+            score += points;
+            document.getElementById('score').innerText = `Score: ${score}`;
+            document.body.style.backgroundColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+        }
+
+        function playSound(type) {
+            let sounds = {
+                hit: 'mixkit-winning-a-coin-video-game-2069.wav',
+                miss: 'mixkit-game-ball-tap-2073.wav',
+                bonus: 'game-bonus-2-294436.mp3'
+            };
+            let audio = new Audio(sounds[type]);
+            audio.play().catch(error => console.log("Audio play failed:", error));
+        }
+
+        function createTarget() {
+            if (!gameActive) return;
+            let target = document.createElement('div');
+            target.classList.add('target', 'rounded-circle', 'bg-danger', 'circlestyle');
+            target.style.width = `${Math.random() * 40 + 30}px`;
+            target.style.height = target.style.width;
+            target.style.position = 'absolute';
+            target.style.top = Math.random() * (window.innerHeight - 50) + "px";
+            target.style.left = Math.random() * (window.innerWidth - 50) + "px";
+
+            if (Math.random() > 0.8) {
+                target.classList.add('golden', 'bg-warning');
+            }
+
+            document.body.appendChild(target);
+            moveTarget(target);
+
+            target.addEventListener('click', () => {
+                if (!gameActive) return;
+                if (target.classList.contains('golden')) {
+                    updateScore(5);
+                    document.getElementById('surprise').innerText = "🌟 Bonus!";
+                    playSound('bonus');
+                } else {
+                    updateScore(1);
+                    document.getElementById('surprise').innerText = ["🎯 Great Shot!", "🔥 Nice Aim!", "💥 Boom!"][Math.floor(Math.random() * 3)];
+                    playSound('hit');
+                }
+                target.remove();
+                setTimeout(createTarget, 500);
+            });
+
+            setTimeout(() => {
+                if (document.body.contains(target)) {
+                    target.remove();
+                    document.getElementById('surprise').innerText = "❌ Missed! Try again.";
+                    playSound('miss');
+                    if (gameActive) setTimeout(createTarget, 500);
+                }
+            }, 2000);
+        }
+
+        function moveTarget(target) {
+            setInterval(() => {
+                target.style.top = Math.random() * (window.innerHeight - 50) + "px";
+                target.style.left = Math.random() * (window.innerWidth - 50) + "px";
+            }, 1000);
+        }
+
+        function startGame() {
+            if (gameActive) return;
+            gameActive = true;
+            score = 0;
+            timeLeft = 30;
+            document.getElementById('score').innerText = `Score: ${score}`;
+            document.getElementById('timer').innerText = `Time: ${timeLeft}`;
+            document.getElementById('surprise').innerText = "Hit the targets!";
+            gameInterval = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    document.getElementById('timer').innerText = `Time: ${timeLeft}`;
+                } else {
+                    endGame();
+                }
+            }, 1000);
+            createTarget();
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(gameInterval);
+            document.querySelectorAll('.target').forEach(target => target.remove());
+            let surpriseElement = document.getElementById('surprise');
+            surpriseElement.innerHTML = `Game Over! <span class="final-score">Final Score: ${score}</span><br>Click to Restart!`;
+            surpriseElement.classList.add('fw-bold', 'game-over-text');
+            document.getElementById('gameEndAudio').play();
+        }
+
+        document.getElementById("surpriseBtn").addEventListener("click", startGame);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
